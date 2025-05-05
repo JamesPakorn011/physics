@@ -1,0 +1,778 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบทดสอบวิชาฟิสิกส์ ม.4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f7ff;
+        }
+        
+        .quiz-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e7ff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        
+        .question-nav-item {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .question-nav-item.active {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .question-nav-item.answered {
+            background-color: #93c5fd;
+            color: white;
+        }
+        
+        .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .option-label {
+            transition: all 0.2s ease;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .option-label:hover {
+            border-color: #93c5fd;
+        }
+        
+        input[type="radio"]:checked + .option-label {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .correct-answer {
+            border-color: #10b981 !important;
+            background-color: #d1fae5 !important;
+        }
+        
+        .wrong-answer {
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8">
+    <!-- Login Screen -->
+    <div id="login-screen" class="quiz-container p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600 mb-2">แบบทดสอบวิชาฟิสิกส์</h1>
+            <h2 class="text-xl text-blue-500">มัธยมศึกษาปีที่ 4 เรื่อง บทนำและการวัด</h2>
+        </div>
+        
+        <div class="bg-blue-50 p-6 rounded-lg mb-6">
+            <h3 class="text-lg font-medium text-blue-700 mb-3">คำชี้แจง</h3>
+            <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                <li>แบบทดสอบมีทั้งหมด 20 ข้อ</li>
+                <li>เวลาในการทำข้อสอบข้อละ 5 นาที</li>
+                <li>ต้องตอบคำถามทุกข้อก่อนส่งคำตอบ</li>
+                <li>สามารถย้อนกลับไปแก้ไขคำตอบได้</li>
+            </ul>
+        </div>
+        
+        <div class="mb-6">
+            <label for="student-name" class="block text-sm font-medium text-gray-700 mb-2">กรุณากรอกชื่อ-นามสกุล</label>
+            <input type="text" id="student-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="ชื่อ-นามสกุล">
+            <p id="name-error" class="text-red-500 text-sm mt-1 hidden">กรุณากรอกชื่อ-นามสกุลก่อนเริ่มทำแบบทดสอบ</p>
+        </div>
+        
+        <button id="start-quiz" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+            เริ่มทำแบบทดสอบ
+        </button>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="quiz-container hidden">
+        <header class="bg-blue-600 text-white p-6 rounded-t-lg">
+            <h1 class="text-2xl font-bold mb-1">วิชาฟิสิกส์ มัธยมศึกษาปีที่ 4</h1>
+            <h2 class="text-lg font-medium">เรื่อง บทนำและการวัด</h2>
+        </header>
+        
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center mb-2">
+                <div class="text-sm text-gray-600">เวลาที่เหลือ: <span id="timer" class="font-medium">5:00</span></div>
+                <div class="text-sm text-gray-600">ข้อ <span id="current-question">1</span> จาก <span id="total-questions">20</span></div>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div id="question-container" class="mb-8">
+                <!-- Question content will be inserted here -->
+            </div>
+            
+            <div class="flex justify-between">
+                <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg flex items-center btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    ข้อก่อนหน้า
+                </button>
+                <button id="next-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center btn">
+                    ข้อถัดไป
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6 bg-gray-50 rounded-b-lg">
+            <p class="text-sm text-gray-600 mb-3">เลือกข้อที่ต้องการ:</p>
+            <div id="question-nav" class="flex flex-wrap gap-2">
+                <!-- Question navigation buttons will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="quiz-container hidden">
+        <header class="bg-blue-600 text-white p-6 rounded-t-lg">
+            <h1 class="text-2xl font-bold mb-1">ผลการทดสอบ</h1>
+            <h2 class="text-lg font-medium">วิชาฟิสิกส์ มัธยมศึกษาปีที่ 4 เรื่อง บทนำและการวัด</h2>
+        </header>
+        
+        <div class="p-8">
+            <div class="bg-blue-50 p-6 rounded-lg mb-8">
+                <h3 class="text-xl font-bold text-blue-700 mb-2">สรุปคะแนน</h3>
+                <div class="flex items-center justify-center space-x-8 mb-4">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-600" id="score">0</div>
+                        <div class="text-gray-600">คะแนนที่ได้</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-gray-700">20</div>
+                        <div class="text-gray-600">คะแนนเต็ม</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-green-600" id="percentage">0%</div>
+                        <div class="text-gray-600">เปอร์เซ็นต์</div>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                    <div id="score-bar" class="bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
+                </div>
+                <p class="text-center text-gray-600" id="student-result-name"></p>
+            </div>
+            
+            <h3 class="text-xl font-bold text-gray-700 mb-4">เฉลยคำตอบ</h3>
+            <div id="answers-container" class="space-y-8">
+                <!-- Answer explanations will be inserted here -->
+            </div>
+            
+            <button id="restart-quiz" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center mt-8 btn">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                </svg>
+                เริ่มทำแบบทดสอบใหม่
+            </button>
+        </div>
+        
+        <footer class="bg-gray-50 p-6 rounded-b-lg flex items-center justify-between">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span class="text-gray-600">พัฒนาโดย ฟ้าใส เด็กเรียน</span>
+            </div>
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <span class="text-gray-600">วิชาฟิสิกส์ ม.4</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Quiz data
+        const quizData = [
+            {
+                question: "ข้อใดเป็นปริมาณฐาน (Base Quantity) ในระบบ SI",
+                options: [
+                    "ความเร่ง",
+                    "มวล",
+                    "แรง",
+                    "พลังงาน"
+                ],
+                answer: 1,
+                explanation: "ปริมาณฐานในระบบ SI มี 7 ปริมาณ ได้แก่ ความยาว (เมตร), มวล (กิโลกรัม), เวลา (วินาที), กระแสไฟฟ้า (แอมแปร์), อุณหภูมิ (เคลวิน), ปริมาณสาร (โมล) และความเข้มการส่องสว่าง (แคนเดลา) โดยมวลเป็นหนึ่งในปริมาณฐาน ส่วนความเร่ง แรง และพลังงานเป็นปริมาณอนุพันธ์"
+            },
+            {
+                question: "หน่วยวัดใดต่อไปนี้เป็นหน่วยของความยาวในระบบ SI",
+                options: [
+                    "กิโลกรัม",
+                    "วินาที",
+                    "เมตร",
+                    "แอมแปร์"
+                ],
+                answer: 2,
+                explanation: "หน่วยของความยาวในระบบ SI คือ เมตร (meter) ส่วนกิโลกรัมเป็นหน่วยของมวล วินาทีเป็นหน่วยของเวลา และแอมแปร์เป็นหน่วยของกระแสไฟฟ้า"
+            },
+            {
+                question: "เครื่องมือใดเหมาะสำหรับวัดความยาวของห้องเรียน",
+                options: [
+                    "ไมโครมิเตอร์",
+                    "เวอร์เนียคาลิปเปอร์",
+                    "ตลับเมตร",
+                    "ไม้บรรทัด"
+                ],
+                answer: 2,
+                explanation: "ตลับเมตรเหมาะสำหรับวัดความยาวในระยะที่ยาว เช่น ความยาวของห้องเรียน ส่วนไมโครมิเตอร์และเวอร์เนียคาลิปเปอร์ใช้วัดขนาดเล็กที่ต้องการความละเอียดสูง และไม้บรรทัดมีความยาวจำกัด ไม่เหมาะกับการวัดห้องเรียน"
+            },
+            {
+                question: "ข้อใดเป็นการแปลงหน่วยจาก 5 กิโลเมตรเป็นเมตรที่ถูกต้อง",
+                options: [
+                    "0.005 เมตร",
+                    "50 เมตร",
+                    "500 เมตร",
+                    "5,000 เมตร"
+                ],
+                answer: 3,
+                explanation: "1 กิโลเมตร = 1,000 เมตร ดังนั้น 5 กิโลเมตร = 5 × 1,000 = 5,000 เมตร"
+            },
+            {
+                question: "ความหนาแน่นมีหน่วยในระบบ SI คือข้อใด",
+                options: [
+                    "กิโลกรัมต่อลูกบาศก์เมตร (kg/m³)",
+                    "กรัมต่อลูกบาศก์เซนติเมตร (g/cm³)",
+                    "กิโลกรัมต่อลิตร (kg/L)",
+                    "นิวตันต่อตารางเมตร (N/m²)"
+                ],
+                answer: 0,
+                explanation: "หน่วยของความหนาแน่นในระบบ SI คือ กิโลกรัมต่อลูกบาศก์เมตร (kg/m³) ซึ่งมาจากหน่วยของมวล (kg) หารด้วยหน่วยของปริมาตร (m³)"
+            },
+            {
+                question: "เครื่องมือใดใช้วัดความหนาของแผ่นโลหะบางๆ ได้อย่างเหมาะสม",
+                options: [
+                    "ตลับเมตร",
+                    "ไม้บรรทัด",
+                    "ไมโครมิเตอร์",
+                    "นาฬิกาจับเวลา"
+                ],
+                answer: 2,
+                explanation: "ไมโครมิเตอร์เป็นเครื่องมือวัดที่มีความละเอียดสูง เหมาะสำหรับวัดขนาดเล็กๆ เช่น ความหนาของแผ่นโลหะบาง โดยมีความละเอียดถึง 0.01 มิลลิเมตร หรือ 0.001 มิลลิเมตร"
+            },
+            {
+                question: "ข้อใดเป็นการวัดที่มีความแม่นยำ (Accuracy) สูง",
+                options: [
+                    "วัดซ้ำหลายครั้งแล้วได้ค่าใกล้เคียงกัน แต่ไม่ตรงกับค่าจริง",
+                    "วัดซ้ำหลายครั้งแล้วได้ค่าที่แตกต่างกันมาก แต่ค่าเฉลี่ยใกล้เคียงค่าจริง",
+                    "วัดซ้ำหลายครั้งแล้วได้ค่าใกล้เคียงกันและใกล้เคียงค่าจริง",
+                    "วัดครั้งเดียวแล้วได้ค่าตรงกับค่าจริงพอดี"
+                ],
+                answer: 3,
+                explanation: "ความแม่นยำ (Accuracy) หมายถึงความใกล้เคียงของค่าที่วัดได้กับค่าจริง การวัดที่ได้ค่าตรงกับค่าจริงพอดีจึงมีความแม่นยำสูงที่สุด ส่วนการวัดซ้ำแล้วได้ค่าใกล้เคียงกันเป็นการวัดที่มีความเที่ยง (Precision) สูง"
+            },
+            {
+                question: "ข้อใดเป็นการแปลงหน่วยจาก 2.5 ชั่วโมงเป็นวินาทีที่ถูกต้อง",
+                options: [
+                    "150 วินาที",
+                    "1,500 วินาที",
+                    "9,000 วินาที",
+                    "9,000,000 วินาที"
+                ],
+                answer: 2,
+                explanation: "1 ชั่วโมง = 60 นาที = 60 × 60 = 3,600 วินาที ดังนั้น 2.5 ชั่วโมง = 2.5 × 3,600 = 9,000 วินาที"
+            },
+            {
+                question: "ข้อใดเป็นตัวอย่างของปริมาณเวกเตอร์",
+                options: [
+                    "มวล",
+                    "เวลา",
+                    "ความเร็ว",
+                    "พลังงาน"
+                ],
+                answer: 2,
+                explanation: "ปริมาณเวกเตอร์เป็นปริมาณที่ต้องระบุทั้งขนาดและทิศทาง ความเร็วเป็นปริมาณเวกเตอร์เพราะต้องระบุทั้งอัตราเร็วและทิศทางการเคลื่อนที่ ส่วนมวล เวลา และพลังงานเป็นปริมาณสเกลาร์ที่มีเพียงขนาดเท่านั้น"
+            },
+            {
+                question: "ข้อใดเป็นหน่วยของแรงในระบบ SI",
+                options: [
+                    "จูล (J)",
+                    "นิวตัน (N)",
+                    "วัตต์ (W)",
+                    "ปาสคาล (Pa)"
+                ],
+                answer: 1,
+                explanation: "หน่วยของแรงในระบบ SI คือ นิวตัน (N) ส่วนจูลเป็นหน่วยของพลังงาน วัตต์เป็นหน่วยของกำลัง และปาสคาลเป็นหน่วยของความดัน"
+            },
+            {
+                question: "ข้อใดเป็นการเขียนตัวเลขในรูปสัญกรณ์วิทยาศาสตร์ (Scientific Notation) ของ 45,000 ที่ถูกต้อง",
+                options: [
+                    "4.5 × 10⁴",
+                    "45 × 10³",
+                    "450 × 10²",
+                    "0.45 × 10⁵"
+                ],
+                answer: 0,
+                explanation: "การเขียนในรูปสัญกรณ์วิทยาศาสตร์ต้องเขียนในรูป a × 10ⁿ โดย 1 ≤ a < 10 ดังนั้น 45,000 = 4.5 × 10⁴"
+            },
+            {
+                question: "ข้อใดเป็นการวัดที่มีความเที่ยง (Precision) สูง",
+                options: [
+                    "วัดซ้ำหลายครั้งแล้วได้ค่าใกล้เคียงกัน",
+                    "วัดซ้ำหลายครั้งแล้วได้ค่าที่แตกต่างกันมาก",
+                    "วัดครั้งเดียวแล้วได้ค่าตรงกับค่าจริงพอดี",
+                    "วัดซ้ำหลายครั้งแล้วได้ค่าเฉลี่ยใกล้เคียงค่าจริง"
+                ],
+                answer: 0,
+                explanation: "ความเที่ยง (Precision) หมายถึงความใกล้เคียงกันของผลการวัดซ้ำๆ การวัดที่ได้ค่าใกล้เคียงกันเมื่อวัดซ้ำหลายครั้งจึงมีความเที่ยงสูง แม้ว่าค่าที่วัดได้อาจจะไม่ตรงกับค่าจริงก็ตาม"
+            },
+            {
+                question: "ข้อใดเป็นการแปลงหน่วยจาก 0.25 ตารางเมตรเป็นตารางเซนติเมตรที่ถูกต้อง",
+                options: [
+                    "25 ตารางเซนติเมตร",
+                    "250 ตารางเซนติเมตร",
+                    "2,500 ตารางเซนติเมตร",
+                    "25,000 ตารางเซนติเมตร"
+                ],
+                answer: 2,
+                explanation: "1 ตารางเมตร = 10,000 ตารางเซนติเมตร (เพราะ 1 เมตร = 100 เซนติเมตร และพื้นที่เป็นตารางจึงต้องยกกำลังสอง) ดังนั้น 0.25 ตารางเมตร = 0.25 × 10,000 = 2,500 ตารางเซนติเมตร"
+            },
+            {
+                question: "ข้อใดเป็นหน่วยของความเร่งในระบบ SI",
+                options: [
+                    "เมตรต่อวินาที (m/s)",
+                    "เมตรต่อวินาทีกำลังสอง (m/s²)",
+                    "นิวตันต่อกิโลกรัม (N/kg)",
+                    "จูลต่อวินาที (J/s)"
+                ],
+                answer: 1,
+                explanation: "หน่วยของความเร่งในระบบ SI คือ เมตรต่อวินาทีกำลังสอง (m/s²) ซึ่งแสดงถึงอัตราการเปลี่ยนแปลงความเร็วต่อเวลา ส่วน m/s เป็นหน่วยของความเร็ว N/kg เป็นหน่วยของสนามโน้มถ่วง และ J/s เป็นหน่วยของกำลัง"
+            },
+            {
+                question: "ข้อใดเป็นการอ่านค่าจากเวอร์เนียคาลิปเปอร์ที่มีความละเอียด 0.1 มิลลิเมตร เมื่อขีดศูนย์ของเวอร์เนียอยู่ที่ 2.4 เซนติเมตรบนสเกลหลัก และขีดที่ 7 บนสเกลเวอร์เนียตรงกับขีดบนสเกลหลัก",
+                options: [
+                    "2.47 เซนติเมตร",
+                    "2.74 เซนติเมตร",
+                    "3.1 เซนติเมตร",
+                    "3.17 เซนติเมตร"
+                ],
+                answer: 0,
+                explanation: "การอ่านค่าจากเวอร์เนียคาลิปเปอร์ทำได้โดยอ่านค่าจากสเกลหลักที่ขีดศูนย์ของเวอร์เนียชี้อยู่ (2.4 ซม.) แล้วบวกกับค่าจากสเกลเวอร์เนียที่ขีดตรงกับสเกลหลัก (ขีดที่ 7 = 0.07 ซม.) จะได้ 2.4 + 0.07 = 2.47 ซม."
+            },
+            {
+                question: "ข้อใดเป็นการแปลงหน่วยจาก 75 กิโลเมตรต่อชั่วโมงเป็นเมตรต่อวินาทีที่ถูกต้อง",
+                options: [
+                    "20.83 เมตรต่อวินาที",
+                    "27.78 เมตรต่อวินาที",
+                    "30.56 เมตรต่อวินาที",
+                    "75 เมตรต่อวินาที"
+                ],
+                answer: 1,
+                explanation: "การแปลงหน่วยจาก km/h เป็น m/s ทำได้โดย\n75 km/h = 75 × (1000 m / 1 km) × (1 h / 3600 s) = 75 × 1000 / 3600 = 75000 / 3600 = 20.83 m/s"
+            },
+            {
+                question: "ข้อใดเป็นหน่วยของโมเมนต์ของแรงในระบบ SI",
+                options: [
+                    "นิวตัน (N)",
+                    "จูล (J)",
+                    "นิวตัน-เมตร (N·m)",
+                    "วัตต์ (W)"
+                ],
+                answer: 2,
+                explanation: "หน่วยของโมเมนต์ของแรงในระบบ SI คือ นิวตัน-เมตร (N·m) ซึ่งเป็นผลคูณของแรง (N) กับระยะทางตั้งฉากจากจุดหมุนถึงแนวแรง (m)"
+            },
+            {
+                question: "ข้อใดเป็นการวัดที่มีความคลาดเคลื่อนสัมพัทธ์ (Relative Error) น้อยที่สุด",
+                options: [
+                    "วัดความยาว 10 เมตร คลาดเคลื่อน 0.1 เมตร",
+                    "วัดความยาว 1 เมตร คลาดเคลื่อน 0.01 เมตร",
+                    "วัดความยาว 0.1 เมตร คลาดเคลื่อน 0.001 เมตร",
+                    "วัดความยาว 0.01 เมตร คลาดเคลื่อน 0.0001 เมตร"
+                ],
+                answer: 0,
+                explanation: "ความคลาดเคลื่อนสัมพัทธ์ = ความคลาดเคลื่อนสัมบูรณ์ / ค่าที่วัดได้\nกรณีที่ 1: 0.1/10 = 0.01 หรือ 1%\nกรณีที่ 2: 0.01/1 = 0.01 หรือ 1%\nกรณีที่ 3: 0.001/0.1 = 0.01 หรือ 1%\nกรณีที่ 4: 0.0001/0.01 = 0.01 หรือ 1%\nทุกกรณีมีความคลาดเคลื่อนสัมพัทธ์เท่ากัน คือ 1%"
+            },
+            {
+                question: "ข้อใดเป็นหน่วยของความดันในระบบ SI",
+                options: [
+                    "นิวตัน (N)",
+                    "ปาสคาล (Pa)",
+                    "บาร์ (bar)",
+                    "แอตมอสเฟียร์ (atm)"
+                ],
+                answer: 1,
+                explanation: "หน่วยของความดันในระบบ SI คือ ปาสคาล (Pa) ซึ่งเท่ากับ 1 นิวตันต่อตารางเมตร (N/m²) ส่วนบาร์และแอตมอสเฟียร์เป็นหน่วยนอกระบบ SI"
+            },
+            {
+                question: "ข้อใดเป็นการแปลงหน่วยจาก 1.5 กิโลกรัมเป็นกรัมที่ถูกต้อง",
+                options: [
+                    "0.0015 กรัม",
+                    "15 กรัม",
+                    "150 กรัม",
+                    "1,500 กรัม"
+                ],
+                answer: 3,
+                explanation: "1 กิโลกรัม = 1,000 กรัม ดังนั้น 1.5 กิโลกรัม = 1.5 × 1,000 = 1,500 กรัม"
+            }
+        ];
+
+        // Variables
+        let currentQuestion = 0;
+        let answers = Array(quizData.length).fill(-1);
+        let timerInterval;
+        let timeLeft = 300; // 5 minutes in seconds
+        let studentName = "";
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const studentNameInput = document.getElementById('student-name');
+        const nameError = document.getElementById('name-error');
+        const startQuizBtn = document.getElementById('start-quiz');
+        const questionContainer = document.getElementById('question-container');
+        const currentQuestionEl = document.getElementById('current-question');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const timerEl = document.getElementById('timer');
+        const progressFill = document.getElementById('progress-fill');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const questionNav = document.getElementById('question-nav');
+        const scoreEl = document.getElementById('score');
+        const percentageEl = document.getElementById('percentage');
+        const scoreBar = document.getElementById('score-bar');
+        const studentResultName = document.getElementById('student-result-name');
+        const answersContainer = document.getElementById('answers-container');
+        const restartQuizBtn = document.getElementById('restart-quiz');
+
+        // Initialize
+        totalQuestionsEl.textContent = quizData.length;
+        
+        // Event Listeners
+        startQuizBtn.addEventListener('click', startQuiz);
+        prevBtn.addEventListener('click', goToPreviousQuestion);
+        nextBtn.addEventListener('click', goToNextQuestion);
+        restartQuizBtn.addEventListener('click', restartQuiz);
+
+        // Functions
+        function startQuiz() {
+            studentName = studentNameInput.value.trim();
+            
+            if (studentName === '') {
+                nameError.classList.remove('hidden');
+                return;
+            }
+            
+            loginScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            // Initialize question navigation
+            createQuestionNav();
+            
+            // Load first question
+            loadQuestion(currentQuestion);
+            
+            // Start timer
+            startTimer();
+        }
+        
+        function createQuestionNav() {
+            questionNav.innerHTML = '';
+            
+            for (let i = 0; i < quizData.length; i++) {
+                const navItem = document.createElement('div');
+                navItem.className = `question-nav-item border ${i === currentQuestion ? 'active' : ''} ${answers[i] !== -1 ? 'answered' : 'bg-white text-gray-700'}`;
+                navItem.textContent = i + 1;
+                navItem.addEventListener('click', () => {
+                    goToQuestion(i);
+                });
+                questionNav.appendChild(navItem);
+            }
+        }
+        
+        function loadQuestion(index) {
+            const question = quizData[index];
+            currentQuestionEl.textContent = index + 1;
+            
+            // Reset timer
+            clearInterval(timerInterval);
+            timeLeft = 300; // 5 minutes
+            updateTimerDisplay();
+            startTimer();
+            
+            // Create question HTML
+            let html = `
+                <h3 class="text-xl font-bold text-gray-800 mb-4">ข้อ ${index + 1}: ${question.question}</h3>
+                <div class="space-y-3">
+            `;
+            
+            question.options.forEach((option, i) => {
+                html += `
+                    <div class="flex items-center">
+                        <input type="radio" id="option-${i}" name="answer" value="${i}" class="hidden" ${answers[index] === i ? 'checked' : ''}>
+                        <label for="option-${i}" class="option-label flex items-center w-full p-3 rounded-lg cursor-pointer">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full border-2 border-blue-500 mr-3 ${answers[index] === i ? 'bg-blue-500 text-white' : 'bg-white'}">
+                                ${['ก', 'ข', 'ค', 'ง'][i]}
+                            </span>
+                            <span class="text-gray-700">${option}</span>
+                        </label>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            
+            questionContainer.innerHTML = html;
+            
+            // Add event listeners to radio buttons
+            document.querySelectorAll('input[name="answer"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    answers[index] = parseInt(radio.value);
+                    updateQuestionNav();
+                });
+            });
+            
+            // Update navigation buttons
+            prevBtn.disabled = index === 0;
+            prevBtn.classList.toggle('opacity-50', index === 0);
+            nextBtn.textContent = index === quizData.length - 1 ? 'ส่งคำตอบ' : 'ข้อถัดไป';
+            
+            // Update question navigation
+            updateQuestionNav();
+        }
+        
+        function updateQuestionNav() {
+            const navItems = questionNav.querySelectorAll('.question-nav-item');
+            
+            navItems.forEach((item, i) => {
+                item.classList.toggle('active', i === currentQuestion);
+                item.classList.toggle('answered', answers[i] !== -1);
+                item.classList.toggle('bg-white', answers[i] === -1 && i !== currentQuestion);
+            });
+        }
+        
+        function goToPreviousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion(currentQuestion);
+            }
+        }
+        
+        function goToNextQuestion() {
+            if (answers[currentQuestion] === -1) {
+                alert('กรุณาเลือกคำตอบก่อนไปข้อถัดไป');
+                return;
+            }
+            
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion(currentQuestion);
+            } else {
+                finishQuiz();
+            }
+        }
+        
+        function goToQuestion(index) {
+            if (index !== currentQuestion) {
+                if (answers[currentQuestion] === -1) {
+                    alert('กรุณาเลือกคำตอบก่อนไปข้ออื่น');
+                    return;
+                }
+                
+                currentQuestion = index;
+                loadQuestion(currentQuestion);
+            }
+        }
+        
+        function startTimer() {
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    
+                    if (answers[currentQuestion] === -1) {
+                        alert('หมดเวลา! กรุณาเลือกคำตอบ');
+                    } else {
+                        if (currentQuestion < quizData.length - 1) {
+                            currentQuestion++;
+                            loadQuestion(currentQuestion);
+                        } else {
+                            finishQuiz();
+                        }
+                    }
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update progress bar
+            const percentage = (timeLeft / 300) * 100;
+            progressFill.style.width = `${percentage}%`;
+            
+            // Change color based on time left
+            if (timeLeft <= 60) {
+                progressFill.style.backgroundColor = '#ef4444'; // Red
+            } else if (timeLeft <= 120) {
+                progressFill.style.backgroundColor = '#f59e0b'; // Amber
+            } else {
+                progressFill.style.backgroundColor = '#3b82f6'; // Blue
+            }
+        }
+        
+        function finishQuiz() {
+            clearInterval(timerInterval);
+            
+            // Check if all questions are answered
+            const unansweredQuestions = answers.findIndex(answer => answer === -1);
+            
+            if (unansweredQuestions !== -1) {
+                alert(`กรุณาตอบคำถามข้อที่ ${unansweredQuestions + 1} ก่อนส่งคำตอบ`);
+                goToQuestion(unansweredQuestions);
+                return;
+            }
+            
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            
+            // Calculate score
+            let score = 0;
+            answers.forEach((answer, index) => {
+                if (answer === quizData[index].answer) {
+                    score++;
+                }
+            });
+            
+            // Update results
+            scoreEl.textContent = score;
+            const percentage = (score / quizData.length) * 100;
+            percentageEl.textContent = `${percentage.toFixed(0)}%`;
+            scoreBar.style.width = `${percentage}%`;
+            studentResultName.textContent = `ผู้ทำแบบทดสอบ: ${studentName}`;
+            
+            // Generate answer explanations
+            generateAnswerExplanations();
+        }
+        
+        function generateAnswerExplanations() {
+            answersContainer.innerHTML = '';
+            
+            quizData.forEach((question, index) => {
+                const isCorrect = answers[index] === question.answer;
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'p-4 border rounded-lg';
+                
+                let html = `
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-gray-800">ข้อ ${index + 1}: ${question.question}</h4>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${isCorrect ? 'ถูกต้อง' : 'ไม่ถูกต้อง'}
+                        </span>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                `;
+                
+                question.options.forEach((option, i) => {
+                    const isUserAnswer = answers[index] === i;
+                    const isCorrectAnswer = question.answer === i;
+                    
+                    let optionClass = 'p-3 rounded-lg border-2 ';
+                    
+                    if (isCorrectAnswer) {
+                        optionClass += 'correct-answer';
+                    } else if (isUserAnswer) {
+                        optionClass += 'wrong-answer';
+                    } else {
+                        optionClass += 'border-gray-200';
+                    }
+                    
+                    html += `
+                        <div class="${optionClass} flex items-center">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full border-2 ${isCorrectAnswer ? 'border-green-500 bg-green-500 text-white' : isUserAnswer ? 'border-red-500 bg-red-500 text-white' : 'border-gray-400 bg-white text-gray-700'} mr-3">
+                                ${['ก', 'ข', 'ค', 'ง'][i]}
+                            </span>
+                            <span class="text-gray-700">${option}</span>
+                            ${isCorrectAnswer ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 ml-auto" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>' : ''}
+                            ${!isCorrectAnswer && isUserAnswer ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 ml-auto" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>' : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <h5 class="font-medium text-blue-700 mb-1">คำอธิบาย:</h5>
+                        <p class="text-gray-700">${question.explanation}</p>
+                    </div>
+                `;
+                
+                answerDiv.innerHTML = html;
+                answersContainer.appendChild(answerDiv);
+            });
+        }
+        
+        function restartQuiz() {
+            // Reset variables
+            currentQuestion = 0;
+            answers = Array(quizData.length).fill(-1);
+            timeLeft = 300;
+            
+            // Show login screen
+            resultsScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            
+            // Clear student name
+            studentNameInput.value = '';
+            nameError.classList.add('hidden');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93add0467350270d',t:'MTc0NjQyMjY4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
